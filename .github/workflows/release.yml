@@ -18,27 +18,13 @@ jobs:
     name: Creates a release with static binaries
     runs-on: ubuntu-22.04
     steps:
-      # we need to extract the version from the CMakeLists.txt. This is done via conan.
-      - name: Get minimum cmake version
-        uses: lukka/get-cmake@v3.24.3
-        with:
-          cmakeVersion: 3.21.7
-
-      - name: Install conan
-        run: |
-          pip3 install "conan<2.0"
-          conan profile new --detect default
-
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Extract asset version
-        id: extract_asset_version
-        shell: bash
         run: |
-          echo "asset_version=$(conan inspect . --raw version)" >> $GITHUB_ENV
-
-      # version retrieved ✅ now the release can be put together and released
+          VER=$(cat VERSION)
+          echo "asset_version=$VER" >> $GITHUB_ENV
 
       - uses: dawidd6/action-download-artifact@v2
         name: Download executables artifacts built by 'Build Dockerfile' workflow

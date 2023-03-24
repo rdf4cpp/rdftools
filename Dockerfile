@@ -58,6 +58,7 @@ WORKDIR /rdftools
 COPY execs execs
 COPY cmake cmake
 COPY CMakeLists.txt .
+COPY VERSION .
 COPY conanfile.txt .
 
 ##build
@@ -75,3 +76,4 @@ FROM scratch
 COPY --from=builder /rdftools/build/execs/deduprdf/deduprdf /rdftools/deduprdf
 COPY README.MD /rdftools/README.MD
 COPY README.MD /rdftools/LICENSE
+ENTRYPOINT ["/rdftools/deduprdf"]
