@@ -21,20 +21,16 @@ jobs:
           tags: "rdftools:${{ github.sha }}"
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            "CONAN_USER=${{ secrets.CONAN_USER }}"
-            "CONAN_PW=${{ secrets.CONAN_PW }}"
-      - uses: shrink/actions-docker-extract@v2
-        id: extract
-        name: Extracting executables from docker image
-        with:
-          image: "rdftools:${{ github.sha }}"
-          path: rdftools/
+      - name: Extract binaries
+        run: |
+          id=$(docker create rdftools:${{ github.sha }})
+          docker export $id | tar -x --wildcards "rdftools/**"
+          docker rm $id
       - uses: actions/upload-artifact@v3
         name: Uploading executables as artifacts
         with:
           name: rdftools
-          path: ${{ steps.extract.outputs.destination }}/rdftools/*
+          path: rdftools/*
 
 
 
