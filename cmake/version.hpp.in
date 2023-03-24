@@ -1,0 +1,12 @@
+#ifndef RDFTOOLS_VERSION_HPP
+#define RDFTOOLS_VERSION_HPP
+
+#include <array>
+
+namespace rdf4cpp::rdftools {
+	inline constexpr const char name[] = "@PROJECT_NAME@";
+	inline constexpr const char version[] = "@PROJECT_VERSION@";
+	inline constexpr std::array<int, 3> version_tuple = {@PROJECT_VERSION_MAJOR@, @PROJECT_VERSION_MINOR@, @PROJECT_VERSION_PATCH@};
+}// namespace rdf4cpp::rdftools
+
+#endif//RDFTOOLS_VERSION_HPP

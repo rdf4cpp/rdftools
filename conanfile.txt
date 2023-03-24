@@ -1,0 +1,10 @@
+[requires]
+rdf4cpp/0.0.11@rdf4cpp/develop
+spdlog/1.11.0
+cxxopts/2.2.1
+xxhash/0.8.1
+
+[generators]
+cmake_find_package
+CMakeDeps
+CMakeToolchain

@@ -1,0 +1,16 @@
+macro(execs_optimizations exec_target)
+
+    if (CMAKE_BUILD_TYPE MATCHES "Release")
+        set_target_properties(${exec_target} PROPERTIES LINK_FLAGS_RELEASE -s)
+        message(STATUS "${exec_target} is being stripped.")
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT result OUTPUT output)
+        if(result)
+            set_property(TARGET ${exec_target} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+            message(STATUS "${exec_target} is built with IPO/LTO.")
+        else()
+            message(WARNING "IPO is not supported: ${output}")
+        endif()
+    endif ()
+
+endmacro()
