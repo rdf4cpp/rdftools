@@ -27,8 +27,8 @@ jobs:
       - name: Extract binaries
         run: |
           id=$(docker create rdftools:${{ github.sha }})
-          docker export $id | tar -x --wildcards "rdftools/**"
-          docker rm $id
+#          docker export $id | tar -x --wildcards "rdftools/**"
+#          docker rm $id
       - uses: actions/upload-artifact@v3
         name: Uploading executables as artifacts
         with:
