@@ -58,6 +58,7 @@ WORKDIR /rdftools
 COPY execs execs
 COPY cmake cmake
 COPY CMakeLists.txt .
+COPY VERSION .
 COPY conanfile.txt .
 
 ##build
