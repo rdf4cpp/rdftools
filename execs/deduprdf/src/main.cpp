@@ -1,19 +1,21 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <ranges>
 
+#include <xxh3.h>
 #include <cxxopts.hpp>
 #include <fmt/format.h>
 
 #include <rdf4cpp/rdf/version.hpp>
 #include <rdf4cpp/rdf/storage/util/tsl/sparse_set.h>
-#include <rdf4cpp/rdf/parser/RDFFileParser.hpp>
+#include <rdf4cpp/rdf/storage/util/robin-hood-hashing/robin_hood_hash.hpp>
+
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
-#include <ranges>
-#include <xxh3.h>
 
+#include "parser/IStreamQuadIterator.hpp"
 #include "rdftools_version.hpp"
 
 /**
@@ -28,9 +30,13 @@ using uint64_fast_hash = rdf4cpp::rdf::storage::util::robin_hood::hash<uint64_t>
  * @param quad the quad containing the triple part
  * @return an hash
  */
-auto hash_quad(rdf4cpp::rdf::Quad const &quad) -> uint64_t {
-    assert(&quad.subject() + 1 == &quad.predicate() and &quad.subject() + 2 == &quad.object());
-    return XXH3_64bits(&quad.subject(), sizeof(rdf4cpp::rdf::Node) * 3UL);
+auto hash_quad(rdf4cpp::rdftools::parser::StringQuad const &quad) -> uint64_t {
+    std::array<uint64_t, 4> hashes;
+    for (size_t i = 0UL; i < 4UL; ++i) {
+        auto const val = quad[i].view();
+        hashes[i] = XXH3_64bits(val.begin(), val.size());
+    }
+    return XXH3_64bits(hashes.begin(), sizeof(decltype(hashes)));
 };
 
 /**
@@ -41,37 +47,6 @@ auto istream_destructor = [](std::istream *is_ptr) {
         static_cast<std::ifstream *>(is_ptr)->close();
         delete is_ptr;
     }
-};
-
-auto const quoted_lexical_into_stream = [](std::ostream &out, std::string_view const lexical) noexcept {
-    // TODO: this is ignores UTF8
-
-    out << "\"";
-    for (auto const character: lexical) {
-        switch (character) {
-            case '\\': {
-                out << R"(\\)";
-                break;
-            }
-            case '\n': {
-                out << R"(\n)";
-                break;
-            }
-            case '\r': {
-                out << R"(\r)";
-                break;
-            }
-            case '"': {
-                out << R"(\")";
-                break;
-            }
-                [[likely]] default : {
-                out << character;
-                break;
-            }
-        }
-    }
-    out << "\"";
 };
 
 /**
@@ -191,30 +166,18 @@ int main(int argc, char *argv[]) {
 
     // hashmap for deduplication
     rdf4cpp::rdf::storage::util::tsl::sparse_set<uint64_t, uint64_fast_hash> deduplication;
-    for (rdf4cpp::rdf::parser::IStreamQuadIterator qit{*in};
-         qit != rdf4cpp::rdf::parser::IStreamQuadIterator{}; ++qit) {
+    for (rdf4cpp::rdftools::parser::IStreamQuadIterator qit{*in};
+         qit != rdf4cpp::rdftools::parser::IStreamQuadIterator{}; ++qit) {
         if (qit->has_value()) {
             auto const &quad = qit->value();
             auto const hash = hash_quad(quad);
             auto &&[_, inserted] = deduplication.insert(hash);
             if (inserted) {
                 terminate_at_limit();
-                std::string const object_str = [](auto obj) -> std::string {
-                    if (obj.is_literal()) {
-                        auto const lit = obj.as_literal();
-                        if (lit.template datatype_eq<rdf4cpp::rdf::datatypes::xsd::String>()) {
-                            std::stringstream sb;
-                            quoted_lexical_into_stream(sb, lit.lexical_form());
-                            return sb.str();
-                        }
-                    }
-                    return static_cast<std::string>(obj);
-
-                }(quad.object());
                 (*out) << fmt::format("{} {} {} .\n",
-                                      static_cast<std::string>(quad.subject()),
-                                      static_cast<std::string>(quad.predicate()),
-                                      object_str);
+                                      static_cast<std::string>(quad[1]),
+                                      static_cast<std::string>(quad[2]),
+                                      static_cast<std::string>(quad[3]));
             }
         } else {
             std::stringstream sb;
