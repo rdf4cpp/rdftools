@@ -27,7 +27,7 @@ jobs:
       - name: Extract binaries
         run: |
           docker images
-          docker create "rdftools:${{ github.sha }}"
+          docker create rdftools:${{ github.sha }}
       #          id=$(docker create "rdftools:${{ github.sha }}")
       #          docker export $id | tar -x --wildcards "rdftools/**"
       #          docker rm $id
