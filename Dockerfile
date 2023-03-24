@@ -74,6 +74,4 @@ RUN make -j $(nproc)
 
 FROM scratch
 COPY --from=builder /rdftools/build/execs/deduprdf/deduprdf /rdftools/deduprdf
-COPY README.MD /rdftools/README.MD
-COPY README.MD /rdftools/LICENSE
 ENTRYPOINT ["/rdftools/deduprdf"]
