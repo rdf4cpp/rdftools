@@ -26,7 +26,7 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Extract binaries
         run: |
-          docker --version
+          docker create --help
       #          id=$(docker create rdftools:${{ github.sha }})
       #          docker export $id | tar -x --wildcards "rdftools/**"
       #          docker rm $id
