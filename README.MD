@@ -21,7 +21,7 @@ Binaries are available for download in [releases](https://github.com/rdf4cpp/rdf
 cat swdf.nt | ./deduprdf > swdf_dedup.nt
 ```
 
-or can read and write files itself:
+and working with files:
 
 ```shell
 ./deduprdf --file swdf.nt --output swdf_dedup.nt```
