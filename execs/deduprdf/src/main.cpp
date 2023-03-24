@@ -43,6 +43,37 @@ auto istream_destructor = [](std::istream *is_ptr) {
     }
 };
 
+auto const quoted_lexical_into_stream = [](std::ostream &out, std::string_view const lexical) noexcept {
+    // TODO: this is ignores UTF8
+
+    out << "\"";
+    for (auto const character: lexical) {
+        switch (character) {
+            case '\\': {
+                out << R"(\\)";
+                break;
+            }
+            case '\n': {
+                out << R"(\n)";
+                break;
+            }
+            case '\r': {
+                out << R"(\r)";
+                break;
+            }
+            case '"': {
+                out << R"(\")";
+                break;
+            }
+                [[likely]] default : {
+                out << character;
+                break;
+            }
+        }
+    }
+    out << "\"";
+};
+
 /**
  * Destructor for std::ostream holding either a std::ofstream or std::cin. std::cout is not deleted.
  */
@@ -168,10 +199,22 @@ int main(int argc, char *argv[]) {
             auto &&[_, inserted] = deduplication.insert(hash);
             if (inserted) {
                 terminate_at_limit();
-                (*out) << fmt::format("{} {} {} . \n",
+                std::string const object_str = [](auto obj) -> std::string {
+                    if (obj.is_literal()) {
+                        auto const lit = obj.as_literal();
+                        if (lit.template datatype_eq<rdf4cpp::rdf::datatypes::xsd::String>()) {
+                            std::stringstream sb;
+                            quoted_lexical_into_stream(sb, lit.lexical_form());
+                            return sb.str();
+                        }
+                    }
+                    return static_cast<std::string>(obj);
+
+                }(quad.object());
+                (*out) << fmt::format("{} {} {} .\n",
                                       static_cast<std::string>(quad.subject()),
                                       static_cast<std::string>(quad.predicate()),
-                                      static_cast<std::string>(quad.object()));
+                                      object_str);
             }
         } else {
             std::stringstream sb;
